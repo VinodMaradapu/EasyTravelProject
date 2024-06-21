@@ -1,22 +1,25 @@
 package com.travel.serviceImpl;
 
-import java.awt.Color;
+import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.List;
-
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
-import com.itextpdf.layout.properties.UnitValue;
-import com.itextpdf.kernel.geom.PageSize;
 
 import com.travel.bean.BookingDto;
 import com.travel.bean.FileDto;
@@ -30,53 +33,72 @@ public class RideReportServiceImpl implements RideReportService {
     @Autowired
     private RideReportRepository reportRepository;
 
-    @Override
-    public void generatePdf(FileDto dto, List<BookingDto> data) {
-        try {
-            pdfReport(dto, data);
-            pdfFilePath = dto.getReportName() + ".pdf";
-            zipFile(pdfFilePath, dto.getReportName());
-        } catch (Exception e) {
-            throw new CustomValidationException("Failed to generate PDF report");
-        }
-    }
-
-    private String pdfFilePath = ""; 
-
-    public void pdfReport(FileDto dto, List<BookingDto> data) throws FileNotFoundException {
+	public String generatePdf(FileDto dto, List<BookingDto> data) {
         List<String> columnsName = Arrays.asList("Customer Name", "From Location", "To Location", "Distance",
                 "Captain Name", "Payment");
-        String filePath = "\\" + dto.getReportName() + ".pdf";
+        String pdfFilePath = dto.getReportName() + ".pdf";
 
-        PdfWriter writer = new PdfWriter(pdfFilePath + filePath);
-        PdfDocument pdfDocument = new PdfDocument(writer);
-        Document document = new Document(pdfDocument, PageSize.A4);
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             PdfWriter writer = new PdfWriter(baos);
+             PdfDocument pdfDocument = new PdfDocument(writer);
+             Document document = new Document(pdfDocument)) {
 
-        Paragraph title = new Paragraph("Ride History Report").setTextAlignment(TextAlignment.CENTER).setBold()
-                .setFontSize(20);
-        document.add(title);
+            Paragraph title = new Paragraph("Ride History Report")
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setBold()
+                    .setFontSize(20);
+            document.add(title);
 
-        float[] columnWidths = { 1, 1, 1, 1, 1, 1 }; 
-        Table table = new Table(UnitValue.createPercentArray(columnWidths)).useAllAvailableWidth();
+            Table table = new Table(6); // 6 columns
+            for (String columnName : columnsName) {
+                table.addHeaderCell(columnName);
+            }
+            for (BookingDto booking : data) {
+                table.addCell(booking.getCustomerName());
+                table.addCell(booking.getFrom());
+                table.addCell(booking.getTo());
+                table.addCell(String.valueOf(booking.getDistance()));
+                table.addCell(booking.getCaptainName());
+                table.addCell(String.valueOf(booking.getPayment()));
+            }
+            document.add(table);
 
-        for (String columnName : columnsName) {
-            Cell cell = new Cell().add(new Paragraph(columnName)).setFontSize(8)
-                    .setHeight(28.0f);
-            table.addHeaderCell(cell);
+            document.close();
+
+            Path path = Paths.get(pdfFilePath);
+            Files.write(path, baos.toByteArray());
+
+
+        } catch (IOException e) {
+            throw new CustomValidationException("Failed to generate PDF report");
         }
-        for (BookingDto booking : data) {
-            table.addCell(new Cell().add(new Paragraph(booking.getCustomerName())));
-            table.addCell(new Cell().add(new Paragraph(booking.getFrom())));
-            table.addCell(new Cell().add(new Paragraph(booking.getTo())));
-            table.addCell(new Cell().add(new Paragraph(String.valueOf(booking.getDistance()))));
-            table.addCell(new Cell().add(new Paragraph(booking.getCaptainName())));
-            table.addCell(new Cell().add(new Paragraph(String.valueOf(booking.getPayment()))));
-        }
-        document.add(table);
-        document.close(); 
-        reportRepository.save(document);
+
+        return pdfFilePath;
     }
 
-    private void zipFile(String pdfFilePath, String reportName) {
+    private void zipAndDownload(String pdfFilePath, String reportName) throws FileNotFoundException {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zipOut = new ZipOutputStream(baos);
+             FileInputStream fis = new FileInputStream(pdfFilePath)) {
+
+            ZipEntry zipEntry = new ZipEntry(reportName + ".pdf");
+            zipOut.putNextEntry(zipEntry);
+            byte[] bytes = StreamUtils.copyToByteArray(fis);
+            zipOut.write(bytes, 0, bytes.length);
+            zipOut.closeEntry();
+
+            zipOut.finish();
+
+            byte[] zipBytes = baos.toByteArray();
+
+        } catch (IOException e) {
+            throw new CustomValidationException("Failed to zip PDF file");
+        } finally {
+            File pdfFile = new File(pdfFilePath);
+            if (pdfFile.exists()) {
+                pdfFile.delete();
+            }
+        }
     }
+
 }

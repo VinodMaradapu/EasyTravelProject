@@ -7,7 +7,7 @@ import com.travel.bean.FileDto;
 
 public interface RideReportService{
 
-	void generatePdf(FileDto dto,  List<BookingDto> data);
+	String generatePdf(FileDto dto,  List<BookingDto> data);
 
 
 
