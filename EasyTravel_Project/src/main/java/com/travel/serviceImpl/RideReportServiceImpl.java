@@ -1,18 +1,12 @@
 package com.travel.serviceImpl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.List;
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.io.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StreamUtils;
 
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -22,34 +16,35 @@ import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 
 import com.travel.bean.BookingDto;
-import com.travel.bean.FileDto;
-import com.travel.exception.CustomValidationException;
 import com.travel.repository.RideReportRepository;
 import com.travel.service.RideReportService;
+
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.*;
 
 @Service
 public class RideReportServiceImpl implements RideReportService {
 
     @Autowired
     private RideReportRepository reportRepository;
-
-	public String generatePdf(FileDto dto, List<BookingDto> data) {
+    
+    public byte[] generatePdf( List<BookingDto> data) {
         List<String> columnsName = Arrays.asList("Customer Name", "From Location", "To Location", "Distance",
                 "Captain Name", "Payment");
-        String pdfFilePath = dto.getReportName() + ".pdf";
-
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             PdfWriter writer = new PdfWriter(baos);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (PdfWriter writer = new PdfWriter(baos);
              PdfDocument pdfDocument = new PdfDocument(writer);
              Document document = new Document(pdfDocument)) {
-
             Paragraph title = new Paragraph("Ride History Report")
                     .setTextAlignment(TextAlignment.CENTER)
                     .setBold()
                     .setFontSize(20);
             document.add(title);
-
-            Table table = new Table(6); // 6 columns
+            Table table = new Table(columnsName.size());
+            table.setWidth(520);
             for (String columnName : columnsName) {
                 table.addHeaderCell(columnName);
             }
@@ -62,43 +57,90 @@ public class RideReportServiceImpl implements RideReportService {
                 table.addCell(String.valueOf(booking.getPayment()));
             }
             document.add(table);
-
             document.close();
-
-            Path path = Paths.get(pdfFilePath);
-            Files.write(path, baos.toByteArray());
-
-
+            return baos.toByteArray(); 
         } catch (IOException e) {
-            throw new CustomValidationException("Failed to generate PDF report");
-        }
-
-        return pdfFilePath;
-    }
-
-    private void zipAndDownload(String pdfFilePath, String reportName) throws FileNotFoundException {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ZipOutputStream zipOut = new ZipOutputStream(baos);
-             FileInputStream fis = new FileInputStream(pdfFilePath)) {
-
-            ZipEntry zipEntry = new ZipEntry(reportName + ".pdf");
-            zipOut.putNextEntry(zipEntry);
-            byte[] bytes = StreamUtils.copyToByteArray(fis);
-            zipOut.write(bytes, 0, bytes.length);
-            zipOut.closeEntry();
-
-            zipOut.finish();
-
-            byte[] zipBytes = baos.toByteArray();
-
-        } catch (IOException e) {
-            throw new CustomValidationException("Failed to zip PDF file");
-        } finally {
-            File pdfFile = new File(pdfFilePath);
-            if (pdfFile.exists()) {
-                pdfFile.delete();
-            }
+            e.printStackTrace(); 
+            return null;
         }
     }
 
+
+	@Override
+	public byte[] generateExcel(List<BookingDto> data) {
+		        try {
+		            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		            HSSFWorkbook workbook = new HSSFWorkbook();
+		            HSSFSheet sheet = workbook.createSheet("Booking Data");
+
+		            String[] header = new String[] {"Customer Name", "From Location", "To Location", "Distance",
+		                    "Captain Name", "Payment"};
+		            HSSFRow headerRow = sheet.createRow(0);
+		            HSSFCellStyle style = createCellColor(workbook);
+
+		            int count = 0;
+		            for (String columnName : header) {
+		                Cell cell = headerRow.createCell(count++);
+		                cell.setCellValue(columnName);
+		                cell.setCellStyle(style);
+		            }
+
+		            int rowIdx = 1;
+		            for (BookingDto booking : data) {
+		                Row row = sheet.createRow(rowIdx++);
+		                row.createCell(0).setCellValue(booking.getCustomerName());
+		                row.createCell(1).setCellValue(booking.getFrom());
+		                row.createCell(2).setCellValue(booking.getTo());
+		                row.createCell(3).setCellValue(booking.getDistance());
+		                row.createCell(4).setCellValue(booking.getCaptainName());
+		                row.createCell(5).setCellValue(booking.getPayment());
+		            }
+
+		            for (int col = 0; col < header.length; col++) {
+		                sheet.autoSizeColumn(col);
+		            }
+
+		            workbook.write(baos);
+		            workbook.close();
+
+		            return baos.toByteArray();
+		        } catch (IOException e) {
+		            e.printStackTrace();
+		            return null;
+		        }
+		  }
+		 
+	private HSSFCellStyle createCellColor(HSSFWorkbook hssfWorkbook) {
+		HSSFCellStyle cellStyle=hssfWorkbook.createCellStyle();
+		cellStyle.setFillBackgroundColor(IndexedColors.YELLOW.getIndex());
+		cellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+		cellStyle.setBorderTop(BorderStyle.THIN);
+		cellStyle.setBorderBottom(BorderStyle.THIN);
+		cellStyle.setBorderLeft(BorderStyle.THIN);
+		cellStyle.setBorderRight(BorderStyle.THIN);
+		Font font=hssfWorkbook.createFont();
+		font.setBold(true);
+		return cellStyle;
+	}
+	@Override
+		    public void zipFile(String savePath, byte[] pdfBytes) {
+		        try (FileOutputStream fos = new FileOutputStream(savePath);
+		             ZipOutputStream zipOut = new ZipOutputStream(fos);
+		             ByteArrayInputStream bis = new ByteArrayInputStream(pdfBytes)) {
+		            
+		            ZipEntry zipEntry = new ZipEntry("RideHistoryReport.zip");
+		            zipOut.putNextEntry(zipEntry);
+		            
+		            byte[] buffer = new byte[1024];
+		            int bytesRead;
+		            while ((bytesRead = bis.read(buffer)) != -1) {
+		                zipOut.write(buffer, 0, bytesRead);
+		            }
+		            zipOut.closeEntry();
+		            
+		        } catch (IOException e) {
+		            e.printStackTrace();
+		        }
+		    
+	}
 }

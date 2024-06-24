@@ -9,6 +9,4 @@ import com.travel.bean.BookingDto;
 @Repository
 public interface RideReportRepository extends JpaRepository<BookingDto, Integer> {
 
-	void save(Document document);
-
 }
