@@ -1,26 +1,24 @@
 package com.travel.serviceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
 import com.travel.bean.ApiResponse;
-import com.travel.bean.CaptainDto;
 import com.travel.bean.ForgotPasswordRequestDTO;
 import com.travel.bean.SendOtpPhone;
+import com.travel.bean.User;
 import com.travel.bean.VerifyOtpDetails;
 import com.travel.bean.LoginCaptain;
 import com.travel.bean.SendOtpEmail;
 import com.travel.bean.util.JWTService;
-import com.travel.repository.CaptainRepository;
 import com.travel.repository.LocationRepository;
 import com.travel.repository.LoginRepository;
+import com.travel.repository.UserRepository;
 import com.travel.repository.VerifyOtpDetailsRepository;
 import com.travel.service.LoginService;
 
 @Service
 public class LoginServiceImpl implements LoginService{
-	
-	@Autowired
-	CaptainRepository captainRepository;
 	
 	@Autowired
 	LoginRepository loginRepository;
@@ -36,9 +34,12 @@ public class LoginServiceImpl implements LoginService{
 	
 	@Autowired
 	LocationRepository locationRepository;
+	
+	@Autowired
+	UserRepository userRepository;
     
 	public String sendOtpByEmail(SendOtpEmail sendOtpEmail) {
-	    CaptainDto captain = captainRepository.findByEmail(sendOtpEmail.getEmail());
+	    User captain = userRepository.findByEmail(sendOtpEmail.getEmail());
 	    try {
 	        if (captain != null) {
 	            String otp = otpService.generateOtp();
@@ -58,7 +59,7 @@ public class LoginServiceImpl implements LoginService{
 	    }
      }
 	public String sendOtpByPhone(SendOtpPhone sendOtpPhone) {
-		CaptainDto captain=captainRepository.findByPhone(sendOtpPhone.getPhone());
+		User captain=userRepository.findByPhone(sendOtpPhone.getPhone());
 		try {
 			if(captain!=null){
 		      String otp = otpService.generateOtp();
@@ -106,38 +107,30 @@ public class LoginServiceImpl implements LoginService{
 			return null;
 		}
 	}
-	public ApiResponse login(LoginCaptain loginCaptain) {
-		ApiResponse apiResponce=new ApiResponse();
-		try {
-			CaptainDto captainDto=captainRepository.findByEmailorPhoneNumberAndPassword(loginCaptain.getEmailOrPhone(),loginCaptain.getPassword());
-			if(captainDto!=null) {
-	            String token = jwtservice.generateToken(captainDto.getEmail(),captainDto.getUserName());
-	            apiResponce.setStatus(true);
-	            apiResponce.setStatusCode("200");
-	            apiResponce.setMessage("successfully token generated");
-	            apiResponce.setData(token);
-	            return apiResponce;
-			}else {
-				apiResponce.setStatus(false);
-	            apiResponce.setStatusCode("200");
-	            apiResponce.setMessage("invalid data");
-	            return apiResponce;
-			}
-		} catch (Exception e) {
-			apiResponce.setStatus(false);
-            apiResponce.setStatusCode("500");
-            apiResponce.setMessage(e.getMessage());
-            return apiResponce;
-		}
-	}
+//	public ApiResponse login(User u) {
+//		ApiResponse apiResponce=new ApiResponse();
+//		try {
+//			User user =userRepository.findByEmailorPhoneNumberAndPassword(loginCaptain.getEmailOrPhone(),loginCaptain.getPassword());
+//			if(user!=null) {
+//	            String token = jwtservice.generateToken(user.getEmail(),captainDto.getUserName());
+//	            apiResponce.setStatus(true);
+//	            apiResponce.setStatusCode("200");
+//	            apiResponce.setMessage("successfully token generated");
+//	            apiResponce.setData(token);
+//	            return apiResponce;
+//			}else {
+//				apiResponce.setStatus(false);
+//	            apiResponce.setStatusCode("200");
+//	            apiResponce.setMessage("invalid data");
+//	            return apiResponce;
+//			}
+//		} catch (Exception e) {
+//			apiResponce.setStatus(false);
+//            apiResponce.setStatusCode("500");
+//            apiResponce.setMessage(e.getMessage());
+//            return apiResponce;
+//		}
+//	}
+//	
 	
-	@Override
-	public CaptainDto forgotPassword(ForgotPasswordRequestDTO dto) {
-		CaptainDto captainDto=new CaptainDto();
-		if(dto.getEnterNewPassword().equals(dto.getConfirmNewPassword())) {
-			captainDto.setPassword(dto.getEnterNewPassword());
-		}
-		return captainRepository.save(captainDto);
-	}
-
 }

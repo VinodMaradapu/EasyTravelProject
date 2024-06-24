@@ -1,4 +1,4 @@
-package com.travel.advice;
+package com.travel.bean.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

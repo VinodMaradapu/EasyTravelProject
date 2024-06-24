@@ -2,6 +2,7 @@ package com.travel.serviceImpl;
 
 
 import java.io.IOException;
+
 import java.util.Optional;
 
 
@@ -9,9 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.travel.advice.ImageUtil;
 import com.travel.bean.ApiResponse;
 import com.travel.bean.UploadPhoto;
+import com.travel.bean.util.ImageUtil;
 import com.travel.repository.UploadPhotoRepository;
 import com.travel.service.UploadPhotoService;
 
