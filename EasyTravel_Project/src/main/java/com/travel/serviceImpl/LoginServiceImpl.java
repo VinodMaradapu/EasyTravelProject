@@ -3,14 +3,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;
 
-import com.travel.bean.ApiResponse;
 import com.travel.bean.SendOtpPhone;
 import com.travel.bean.User;
 import com.travel.bean.VerifyOtpDetails;
-import com.travel.bean.LoginCaptain;
 import com.travel.bean.SendOtpEmail;
 import com.travel.bean.util.JWTService;
-import com.travel.repository.LocationRepository;
 import com.travel.repository.LoginRepository;
 import com.travel.repository.UserRepository;
 import com.travel.repository.VerifyOtpDetailsRepository;
@@ -31,8 +28,6 @@ public class LoginServiceImpl implements LoginService{
 	@Autowired
 	JWTService jwtservice;
 	
-	@Autowired
-	LocationRepository locationRepository;
 	
 	@Autowired
 	UserRepository userRepository;
