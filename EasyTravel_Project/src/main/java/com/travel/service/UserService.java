@@ -2,7 +2,6 @@ package com.travel.service;
 
 import java.util.List;
 import java.util.Optional;
-
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,16 +10,14 @@ import com.travel.bean.User;
 import com.travel.bean.util.JWTService;
 import com.travel.repository.UserRepository;
 
-
 @Service
 public class UserService {
-
 	
 	@Autowired
   	UserRepository userRepository;
 	@Autowired
 	JWTService jwtService;
-
+ 
     private static final Logger log = Logger.getLogger(UserService.class);
 
     public ApiResponse insertUser(User user) {
