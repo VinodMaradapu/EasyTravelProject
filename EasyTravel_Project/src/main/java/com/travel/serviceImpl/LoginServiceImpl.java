@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.travel.bean.ApiResponse;
-import com.travel.bean.ForgotPasswordRequestDTO;
 import com.travel.bean.SendOtpPhone;
 import com.travel.bean.User;
 import com.travel.bean.VerifyOtpDetails;
