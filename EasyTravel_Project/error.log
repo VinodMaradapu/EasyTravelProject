@@ -1,0 +1,6 @@
+24-06-26 12:59:39  -039  INFO com.travel.service.RoleService[insertRole] com.travel.service.RoleService.insertRole(RoleService.java:20) insert role method started 
+24-06-26 12:59:41  -041  ERROR com.travel.service.RoleService[insertRole] com.travel.service.RoleService.insertRole(RoleService.java:43) Inserted Role Error 
+24-06-26 01:02:00  -000  INFO com.travel.service.RoleService[insertRole] com.travel.service.RoleService.insertRole(RoleService.java:20) insert role method started 
+24-06-26 01:02:00  -000  ERROR com.travel.service.RoleService[insertRole] com.travel.service.RoleService.insertRole(RoleService.java:43) Inserted Role Error 
+24-06-26 01:03:05  -005  INFO com.travel.service.RoleService[insertRole] com.travel.service.RoleService.insertRole(RoleService.java:20) insert role method started 
+24-06-26 01:03:05  -005  ERROR com.travel.service.RoleService[insertRole] com.travel.service.RoleService.insertRole(RoleService.java:44) Inserted Role Error 

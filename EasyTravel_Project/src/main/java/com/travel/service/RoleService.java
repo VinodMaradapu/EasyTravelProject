@@ -16,35 +16,36 @@ public class RoleService {
     private static final Logger log = Logger.getLogger(UserService.class);
 
 	
-	public ApiResponse insertRole(Role role) {
-		log.info("insert role method started");
-	    ApiResponse apiResponse = new ApiResponse();
-	    try {
-	 	   Role role2= roleRepository.existsByRoleName(role.getRoleName());
-	        if (role2!=null) {
-	            apiResponse.setStatus(true);
-	            apiResponse.setStatusCode("200");
-	            apiResponse.setMessage("already exisiting role name "+role.getRoleName());
-	            log.error("already exisiting role name "+role.getRoleName() );
-	            return apiResponse;
-	        }
-	        
-	        Role savedRole = roleRepository.save(role);
-	        apiResponse.setStatus(true);
-	        apiResponse.setStatusCode("200");
-	        apiResponse.setMessage("Inserted Sucessfully Role");
-	        apiResponse.setData(savedRole);
-	        log.info("Inserted Sucessfully Role");
-	        return apiResponse;
-	    } catch (Exception e) {
-	        apiResponse.setStatus(false);
-	        apiResponse.setStatusCode("400");
-	        apiResponse.setMessage("inserted");
-	        log.error("Inserted Role Error");
-	        return apiResponse;
-	    }
-	}
+    public ApiResponse insertRole(Role role) {
+        log.info("insert role method started");
+        System.out.println(role.toString());
+        ApiResponse apiResponse = new ApiResponse();
+        try {
+            boolean roleExists = roleRepository.existsByRoleName(role.getRoleName());
+            if (roleExists) {
+                apiResponse.setStatus(true);
+                apiResponse.setStatusCode("200");
+                apiResponse.setMessage("Already existing role name " + role.getRoleName());
+                log.error("Already existing role name " + role.getRoleName());
+                return apiResponse;
+            }
 
+            Role savedRole = roleRepository.save(role);
+            apiResponse.setStatus(true);
+            apiResponse.setStatusCode("200");
+            apiResponse.setMessage("Inserted successfully role");
+            apiResponse.setData(savedRole);
+            log.info("Inserted successfully role");
+            return apiResponse;
+        } catch (Exception e) {
+            apiResponse.setStatus(false);
+            apiResponse.setStatusCode("400");
+            apiResponse.setMessage("Inserted role error");
+            log.error("Inserted role error");
+            e.printStackTrace();
+            return apiResponse;
+        }
+    }
 	
 	public ApiResponse getRole(int id) {
 		log.info("get role method started");
